@@ -173,5 +173,5 @@ db.hackers.aggregate([
 ])
 
 #OUTPUT
-
+https://i.supaimg.com/b07f367b-02ce-46e8-be00-5734adffe9c9/8c0ac543-3401-426b-a458-e22db985fbee.png
 
