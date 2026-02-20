@@ -60,4 +60,118 @@ db.malwareDB.insertMany([
     relatedHackers: ["HX002"]
 }
 ])
-#
+# INSERT IP LOGS WITH GEOJSONS
+db.ipLogs.insertMany([
+{
+    hackerId: "HX001",
+    timestamp: new Date(),
+    location: {
+        type: "Point",
+        coordinates: [37.6173, 55.7558]
+    },
+    attackType: "Ransomware Deployment",
+    dataExfiltratedGB: 120
+}
+])
+# CREATE INDEXES
+db.hackers.createIndex({ alias: 1 }, { unique: true })
+db.malwareDB.createIndex({ hashSignature: 1 })
+db.ipLogs.createIndex({ location: "2dsphere" })
+# THREAT ANALYSIS
+db.hackers.aggregate([
+{
+    $lookup: {
+        from: "malwareDB",
+        localField: "hackerId",
+        foreignField: "relatedHackers",
+        as: "malwareLinked"
+    }
+},
+{
+    $project: {
+        alias: 1,
+        threatLevel: 1,
+        totalMalwareLinked: { $size: "$malwareLinked" },
+        combinedRisk: {
+            $multiply: ["$threatLevel", "$riskScore"]
+        }
+    }
+},
+{
+    $sort: { combinedRisk: -1 }
+}
+])
+# NETWORK MAPPING
+db.hackers.aggregate([
+{
+    $graphLookup: {
+        from: "hackers",
+        startWith: "$alias",
+        connectFromField: "alias",
+        connectToField: "alias",
+        as: "networkChain",
+        maxDepth: 2
+    }
+}
+])
+# BUCKET OPERATION
+db.hackers.aggregate([
+{
+    $bucket: {
+        groupBy: "$riskScore",
+        boundaries: [0, 50, 70, 90, 100],
+        default: "Extreme",
+        output: {
+            count: { $sum: 1 }
+        }
+    }
+}
+])
+# EXAMPLE
+session = db.getMongo().startSession()
+
+session.startTransaction()
+
+db.hackers.updateOne(
+    { hackerId: "HX001" },
+    { $inc: { riskScore: 5 } }
+)
+
+db.threatReports.insertOne({
+    hackerId: "HX001",
+    reportDate: new Date(),
+    status: "Risk Increased",
+    analyst: "Cyber AI Engine"
+})
+
+session.commitTransaction()
+session.endSession()
+# REGEX DETECTION QUERY
+db.malwareDB.find({
+    name: { $regex: "Hydra", $options: "i" }
+})
+# MULTI FACET AI REPORT
+db.hackers.aggregate([
+{
+    $facet: {
+        highThreat: [
+            { $match: { threatLevel: { $gte: 8 } } }
+        ],
+        inactiveHackers: [
+            { $match: { active: false } }
+        ],
+        averageRisk: [
+            {
+                $group: {
+                    _id: null,
+                    avgRisk: { $avg: "$riskScore" }
+                }
+            }
+        ]
+    }
+}
+])
+
+#OUTPUT
+
+
