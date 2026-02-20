@@ -41,4 +41,23 @@ db.hackers.insertMany([
     ]
 }
 ])
+# INSERT MALWARE SIGNATURES
+db.malwareDB.insertMany([
+{
+    malwareId: "MW001",
+    name: "BlackHydra",
+    type: "Ransomware",
+    severity: 10,
+    hashSignature: "89XJ23KL90AD12",
+    relatedHackers: ["HX001"]
+},
+{
+    malwareId: "MW002",
+    name: "PhantomWorm",
+    type: "Worm",
+    severity: 8,
+    hashSignature: "88GH21ZX88PL91",
+    relatedHackers: ["HX002"]
+}
+])
 #
